@@ -1,12 +1,12 @@
-import 'package:facebook_lab/firebase_options.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:facebook_lab/firebase_options.dart';
+
+// Uncomment these as you create the actual files
 import 'package:facebook_lab/chat.dart';
 import 'package:facebook_lab/create_post.dart';
 import 'package:facebook_lab/create_story.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:facebook_lab/auth_gate.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:facebook_lab/live.dart';
 import 'package:facebook_lab/market.dart';
 import 'package:facebook_lab/notification.dart';
@@ -21,28 +21,13 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Facebook Lab',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
@@ -50,24 +35,25 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// A simple splash screen that uses an IconButton to continue to `HomePage`.
+// ───────────────────────────────────────────────
+// Splash Screen
+// ───────────────────────────────────────────────
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  SplashScreenState createState() => SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const AuthGate()),
+          MaterialPageRoute(builder: (_) => const HomePage()),
         );
       }
     });
@@ -78,15 +64,55 @@ class SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [Icon(Icons.facebook, size: 100, color: Colors.blue[800])],
-        ),
+        child: Icon(Icons.facebook, size: 100, color: Colors.blue[800]),
       ),
     );
   }
 }
 
+// ───────────────────────────────────────────────
+// Data Models
+// ───────────────────────────────────────────────
+class Post {
+  final String user;
+  final String avatar;
+  final String time;
+  final String text;
+  final String? image;
+
+  int likesCount;
+  bool isLikedByMe;
+  final List<Comment> comments;
+
+  Post({
+    required this.user,
+    required this.avatar,
+    required this.time,
+    required this.text,
+    this.image,
+    this.likesCount = 1200,
+    this.isLikedByMe = false,
+    List<Comment>? comments,
+  }) : comments = comments ?? [];
+}
+
+class Comment {
+  final String user;
+  final String avatar;
+  final String text;
+  final String time;
+
+  Comment({
+    required this.user,
+    required this.avatar,
+    required this.text,
+    required this.time,
+  });
+}
+
+// ───────────────────────────────────────────────
+// Main Home Page with Bottom Navigation
+// ───────────────────────────────────────────────
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -97,19 +123,17 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
-  // List of screens for each tab
   final List<Widget> _screens = [
-    HomeFeedScreen(),          // index 0 - Home feed
-    const LiveScreen(),              // index 1 - Watch/Live
-    const MarketScreen(),            // index 2 - Marketplace
-    const NotificationScreen(),      // index 3 - Notifications
-    const ProfileScreen(),           // index 4 - Profile (you can create this later)
+    const HomeFeedScreen(),
+    const LiveScreen(),
+    const MarketScreen(),
+    const NotificationScreen(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // We hide the app bar for most tabs — or you can make it conditional
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -117,24 +141,23 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.blue[800],
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor: Colors.grey[600],
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onTap: (index) => setState(() => _currentIndex = index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.ondemand_video), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.storefront), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.ondemand_video), label: 'Live'),
+          BottomNavigationBarItem(icon: Icon(Icons.storefront), label: 'Market'),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
           BottomNavigationBarItem(
             icon: CircleAvatar(
-              radius: 12,
-              backgroundImage: AssetImage('assets/music-bot.png'),
+              radius: 13,
+              backgroundColor: Colors.grey,
+              child: Icon(Icons.person, size: 18, color: Colors.white),
             ),
-            label: '',
+            label: 'Profile',
           ),
         ],
       ),
@@ -142,37 +165,77 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Extracted Home Feed into its own widget (the previous body content)
-class HomeFeedScreen extends StatelessWidget {
-  HomeFeedScreen({super.key});
+// ───────────────────────────────────────────────
+// Home Feed Screen (Main Content)
+// ───────────────────────────────────────────────
+class HomeFeedScreen extends StatefulWidget {
+  const HomeFeedScreen({super.key});
 
-  final List<Map<String, dynamic>> fakePosts = [
-    {
-      'user': 'Abebe Kebede',
-      'avatar': 'assets/music-bot.png',
-      'time': '2h',
-      'text': 'Beautiful sunset in Addis today 🌅 Who else enjoyed it?',
-      'image': 'assets/sunset.jpeg',
-      'likes': '1.2K',
-      'comments': '342',
-      'shares': '89',
-    },
-    // ... other posts ...
-  ];
+  @override
+  State<HomeFeedScreen> createState() => _HomeFeedScreenState();
+}
+
+class _HomeFeedScreenState extends State<HomeFeedScreen> {
+  late List<Post> posts;
+
+  @override
+  void initState() {
+    super.initState();
+    posts = [
+      Post(
+        user: "Abebe Kebede",
+        avatar: "assets/music-bot.png",
+        time: "2h",
+        text: "Beautiful sunset in Addis today 🌅 Who else enjoyed it?",
+        image: "assets/sunset.jpeg",
+        likesCount: 1240,
+        comments: [
+          Comment(user: "Sara Alemu", avatar: "assets/music-bot.png", text: "Wow, very beautiful! Where was this?", time: "1h"),
+          Comment(user: "Yonas T.", avatar: "assets/music-bot.png", text: "Ethiopia never disappoints ❤️", time: "45m"),
+        ],
+      ),
+      Post(
+        user: "Meron Desta",
+        avatar: "assets/music-bot.png",
+        time: "5h",
+        text: "Just tried the new buna place in Bole! 10/10 recommend ☕",
+        likesCount: 890,
+      ),
+    ];
+  }
+
+  void toggleLike(int index) {
+    setState(() {
+      final post = posts[index];
+      post.isLikedByMe = !post.isLikedByMe;
+      post.likesCount += post.isLikedByMe ? 1 : -1;
+    });
+  }
+
+  void addComment(int postIndex, String commentText) {
+    if (commentText.trim().isEmpty) return;
+
+    setState(() {
+      final newComment = Comment(
+        user: "You",
+        avatar: "assets/music-bot.png",
+        text: commentText.trim(),
+        time: "Just now",
+      );
+      posts[postIndex].comments.add(newComment);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: TextButton(
-          onPressed: () {},
-          child: const Text(
-            'facebook',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color.fromARGB(255, 3, 71, 126),
-              fontSize: 28,
-            ),
+        title: Text(
+          "facebook",
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Colors.blue[900],
+            fontSize: 28,
           ),
         ),
         actions: [
@@ -181,7 +244,7 @@ class HomeFeedScreen extends StatelessWidget {
             icon: const Icon(Icons.message),
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ChatScreen()),
+              MaterialPageRoute(builder: (_) => const ChatScreen()),
             ),
           ),
           IconButton(
@@ -190,184 +253,184 @@ class HomeFeedScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Quick actions row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 22,
-                    backgroundImage: AssetImage('assets/music-bot.png'),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: const Text(
-                        "What's on your mind?",
-                        style: TextStyle(color: Colors.black54),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Future.delayed(const Duration(seconds: 1));
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // Quick create post area
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    const CircleAvatar(radius: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PostScreen()),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: const Text(
+                            "What's on your mind?",
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.photo_library, color: Colors.green),
-                    onPressed: () {
-                      Navigator.push(
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.photo_library, color: Colors.green),
+                      onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const PostScreen()),
-                      );
-                    },
-                  ),
-                ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            // Stories row...
-            SizedBox(
-              height: 210,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                children: [
-                  // Create story card...
-                  GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const StoryScreen()),
-                    ),
-                    child: Container(
-                      width: 140,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Colors.grey[300],
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.add,
-                                    color: Colors.blue,
-                                    size: 36,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  "Create\nStory",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Fake stories...
-                  for (int i = 0; i < 5; i++)
-                    Container(
-                      width: 140,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/music-bot.png'),
-                          fit: BoxFit.cover,
-                        ),
+              // Stories
+              SizedBox(
+                height: 200,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: [
+                    // Create story button
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const StoryScreen()),
                       ),
                       child: Container(
+                        width: 140,
+                        margin: const EdgeInsets.only(right: 10),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.6),
-                            ],
-                          ),
+                          color: Colors.blue.withOpacity(0.1),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              child: const Icon(Icons.add, color: Colors.blue, size: 32),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text("Create\nStory", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                          ],
                         ),
                       ),
                     ),
-                ],
+                    // Fake stories
+                    ...List.generate(6, (i) => Container(
+                          width: 140,
+                          margin: const EdgeInsets.only(right: 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            image: const DecorationImage(
+                              image: AssetImage('assets/music-bot.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )),
+                  ],
+                ),
               ),
-            ),
 
-            const Divider(height: 12, thickness: 10, color: Colors.grey),
+              const Divider(height: 12, thickness: 10, color: Color(0xFFe4e6eb)),
 
-            // Posts
-            ...fakePosts.map((post) => PostCard(post: post)),
+              // Posts feed
+              ...List.generate(
+                posts.length,
+                (index) => PostCard(
+                  post: posts[index],
+                  onLike: () => toggleLike(index),
+                  onComment: (text) => addComment(index, text),
+                ),
+              ),
 
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class PostCard extends StatelessWidget {
-  final Map<String, dynamic> post;
+// ───────────────────────────────────────────────
+// Post Card Widget
+// ───────────────────────────────────────────────
+class PostCard extends StatefulWidget {
+  final Post post;
+  final VoidCallback onLike;
+  final Function(String) onComment;
 
-  const PostCard({super.key, required this.post});
+  const PostCard({
+    super.key,
+    required this.post,
+    required this.onLike,
+    required this.onComment,
+  });
+
+  @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  final _commentController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    final p = widget.post;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: CircleAvatar(backgroundImage: AssetImage(post['avatar'])),
-            title: Text(post['user'], style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(post['time']),
+            leading: CircleAvatar(backgroundImage: AssetImage(p.avatar)),
+            title: Text(p.user, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(p.time),
             trailing: const Icon(Icons.more_horiz),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(post['text']),
+            child: Text(p.text),
           ),
-          if (post['image'] != null)
-            Image.asset(post['image'], width: double.infinity, fit: BoxFit.cover),
+          if (p.image != null)
+            Image.asset(p.image!, width: double.infinity, fit: BoxFit.cover),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    Text(post['likes']),
-                    const SizedBox(width: 4),
-                    const Text('·'),
-                    const SizedBox(width: 4),
-                    Text(post['comments']),
+                    Text(
+                      "${p.likesCount}",
+                      style: TextStyle(color: p.isLikedByMe ? Colors.blue[700] : null),
+                    ),
+                    const SizedBox(width: 8),
+                    Text("${p.comments.length} comments"),
                   ],
                 ),
-                Text(post['shares']),
+                const Text("42 shares"),
               ],
             ),
           ),
@@ -375,13 +438,117 @@ class PostCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              TextButton.icon(onPressed: () {}, icon: const Icon(Icons.thumb_up_alt_outlined), label: const Text('Like')),
-              TextButton.icon(onPressed: () {}, icon: const Icon(Icons.comment_outlined), label: const Text('Comment')),
-              TextButton.icon(onPressed: () {}, icon: const Icon(Icons.share_outlined), label: const Text('Share')),
+              TextButton.icon(
+                onPressed: widget.onLike,
+                icon: Icon(
+                  p.isLikedByMe ? Icons.thumb_up : Icons.thumb_up_outlined,
+                  color: p.isLikedByMe ? Colors.blue[700] : null,
+                ),
+                label: Text(
+                  "Like",
+                  style: TextStyle(color: p.isLikedByMe ? Colors.blue[700] : null),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.comment_outlined),
+                label: const Text("Comment"),
+              ),
+              TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.share_outlined),
+                label: const Text("Share"),
+              ),
             ],
           ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const CircleAvatar(radius: 18),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _commentController,
+                    decoration: InputDecoration(
+                      hintText: "Write a comment...",
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                    ),
+                    minLines: 1,
+                    maxLines: 5,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.blue),
+                  onPressed: () {
+                    widget.onComment(_commentController.text);
+                    _commentController.clear();
+                  },
+                ),
+              ],
+            ),
+          ),
+          if (p.comments.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: p.comments.map((c) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundImage: AssetImage(c.avatar),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(c.user, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 2),
+                                Text(c.text),
+                                const SizedBox(height: 4),
+                                Text(
+                                  c.time,
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 }
