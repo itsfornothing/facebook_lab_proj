@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:facebook_lab/firebase_options.dart';
+import 'package:facebook_lab/auth_gate.dart';  // Added this import for AuthGate
 
 // Uncomment these as you create the actual files
 import 'package:facebook_lab/chat.dart';
@@ -53,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
+          MaterialPageRoute(builder: (_) => const AuthGate()),  // Changed to AuthGate for auth check
         );
       }
     });
@@ -110,9 +111,7 @@ class Comment {
   });
 }
 
-// ───────────────────────────────────────────────
-// Main Home Page with Bottom Navigation
-// ───────────────────────────────────────────────
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -165,9 +164,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ───────────────────────────────────────────────
-// Home Feed Screen (Main Content)
-// ───────────────────────────────────────────────
+
 class HomeFeedScreen extends StatefulWidget {
   const HomeFeedScreen({super.key});
 
@@ -370,9 +367,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   }
 }
 
-// ───────────────────────────────────────────────
-// Post Card Widget
-// ───────────────────────────────────────────────
+
 class PostCard extends StatefulWidget {
   final Post post;
   final VoidCallback onLike;
